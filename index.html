@@ -2,34 +2,39 @@
 <html>
 <head>
     <title>Mandarin Statistical Learning Task</title>
+    <!-- Core jsPsych -->
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
+    
+    <!-- Plugins -->
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
     <script src="https://unpkg.com/@jspsych/plugin-audio-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.0.3"></script>
     
-    <!-- DataPipe Plugin (This provides both the plugin and the extension) -->
+    <!-- DataPipe Extension & Plugin -->
+    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script> 
     <script src="https://unpkg.com/@jspsych/extension-pipe@0.2.0"></script>
     
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
     
     <style>
-        body { background-color: #f4f7f6; font-family: 'Helvetica Neue', Arial, sans-serif; color: #333; }
-        .jspsych-content { max-width: 900px; }
-        .prime-img { height: 350px; width: auto; border: 6px solid #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
-        .stim-container { display: flex; justify-content: space-around; align-items: center; width: 100%; margin: 40px 0; }
-        .stim-image { width: 280px; height: auto; border: 4px solid #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .fixation { font-size: 80px; font-weight: 300; color: #777; }
-        .custom-submit-btn { background-color: #2c3e50; color: #fff; border: none; border-radius: 5px; padding: 12px 24px; font-size: 16px; cursor: pointer; }
+        body { background-color: #f4f7f6; font-family: 'Helvetica Neue', Arial, sans-serif; }
+        .jspsych-content { max-width: 800px; }
+        .prime-img { height: 350px; width: auto; border: 5px solid #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .stim-container { display: flex; justify-content: space-around; align-items: center; width: 100%; margin: 30px 0; }
+        .stim-image { width: 280px; height: auto; border: 3px solid #fff; border-radius: 10px; }
+        .fixation { font-size: 72px; font-weight: 300; color: #555; }
+        .consent-body { text-align: left; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .form-question { margin-bottom: 20px; text-align: left; background: #fff; padding: 18px; border-radius: 8px; }
+        .custom-submit-btn { background-color: #333; color: #fff; padding: 0.6em 1.2em; font-size: 15px; cursor: pointer; border: none; border-radius: 4px; }
     </style>
 </head>
 <body></body>
 <script>
-    // 1. GENERATE SUBJECT ID FIRST (Using standard JS to avoid initialization error)
-    const subject_id = Math.floor(Math.random() * 1000000000).toString();
+    // 1. INITIALIZE ID AND CONFIG (Prevents ReferenceError)
+    const subject_id = "sub-" + Math.floor(Math.random() * 1000000).toString();
 
-    // 2. INITIALIZE JSPSYCH WITH EXTENSION
     const jsPsych = initJsPsych({
         extensions: [
             {
@@ -47,21 +52,21 @@
         numBlocks: 4 
     };
 
-    // 3. STIMULI (Balanced 16 Items)
+    // 2. STIMULI (Balanced 16 Items)
     const targetItems = [
-        { name: 'cow', cat: 'mammal', complexity: 2.84 }, { name: 'pear', cat: 'fruit', complexity: 2.23 },
-        { name: 'nose', cat: 'body', complexity: 1.88 }, { name: 'chair', cat: 'furniture', complexity: 2.32 },
-        { name: 'elephant', cat: 'mammal', complexity: 2.91 }, { name: 'apple', cat: 'fruit', complexity: 2.39 },
-        { name: 'ear', cat: 'body', complexity: 2.38 }, { name: 'table', cat: 'furniture', complexity: 2.19 },
-        { name: 'rabbit', cat: 'mammal', complexity: 3.22 }, { name: 'banana', cat: 'fruit', complexity: 2.36 },
-        { name: 'chin', cat: 'body', complexity: 1.88 }, { name: 'bottle', cat: 'furniture', complexity: 1.74 },
-        { name: 'sheep', cat: 'mammal', complexity: 3.04 }, { name: 'mushroom', cat: 'fruit', complexity: 2.16 },
-        { name: 'finger', cat: 'body', complexity: 2.73 }, { name: 'lamp', cat: 'furniture', complexity: 2.19 }
+        { name: 'cow', cat: 'mammal', comp: 2.84 }, { name: 'pear', cat: 'fruit', comp: 2.23 },
+        { name: 'nose', cat: 'body', comp: 1.88 }, { name: 'chair', cat: 'furniture', comp: 2.32 },
+        { name: 'elephant', cat: 'mammal', comp: 2.91 }, { name: 'apple', cat: 'fruit', comp: 2.39 },
+        { name: 'ear', cat: 'body', comp: 2.38 }, { name: 'table', cat: 'furniture', comp: 2.19 },
+        { name: 'rabbit', cat: 'mammal', comp: 3.22 }, { name: 'banana', cat: 'fruit', comp: 2.36 },
+        { name: 'chin', cat: 'body', comp: 1.88 }, { name: 'bottle', cat: 'furniture', comp: 1.74 },
+        { name: 'sheep', cat: 'mammal', comp: 3.04 }, { name: 'mushroom', cat: 'fruit', comp: 2.16 },
+        { name: 'finger', cat: 'body', comp: 2.73 }, { name: 'lamp', cat: 'furniture', comp: 2.19 }
     ];
 
     const activeEmotions = ['neutral', 'disgust', 'fear', 'happy'];
 
-    // 4. BALANCED MAPPING
+    // Balanced Mapping: Ensures 1 item of each category per emotion
     function getBalancedMapping() {
         let mapping = {};
         const categories = ['mammal', 'fruit', 'body', 'furniture'];
@@ -76,14 +81,13 @@
     }
     const currentMapping = getBalancedMapping();
 
-    // 5. TRIAL GENERATION
     function generateTrialVariables() {
         return targetItems.map(item => {
             const possibleFoils = targetItems.filter(f => f.cat !== item.cat);
             const foil = jsPsych.randomization.sampleWithoutReplacement(possibleFoils, 1)[0];
             const targetIsLeft = Math.random() < 0.5;
             return {
-                target_name: item.name, target_cat: item.cat, target_comp: item.complexity,
+                target_name: item.name, target_cat: item.cat,
                 audio: `assets/audio/${item.name}.mp3`,
                 emo: currentMapping[item.name],
                 left_img: targetIsLeft ? `assets/stims/${item.cat}/${item.cat}_${item.name}.png` : `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`,
@@ -95,73 +99,112 @@
 
     const timeline = [];
 
-    // Preload
-    timeline.push({
-        type: jsPsychPreload,
-        auto_preload: true
-    });
-
-    // Instructions
-    timeline.push({
-        type: jsPsychHtmlButtonResponse,
-        stimulus: "<h2>Instructions</h2><p>Match the Mandarin word to the correct image using F (left) or J (right).</p>",
-        choices: ["Begin"]
-    });
-
-    // Trials
-    const fixation = {
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: '<div class="fixation">+</div>',
-        choices: "NO_KEYS",
-        trial_duration: 500
-    };
-
-    const prime = {
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: function() {
-            const emo = jsPsych.timelineVariable('emo');
-            const randIdx = Math.floor(Math.random() * 12) + 1;
-            return `<img src="assets/primes/${emo}/${emo}_${randIdx}.jpg" class="prime-img">`;
-        },
-        choices: "NO_KEYS",
-        trial_duration: RUNTIME_CONFIG.primeDuration
-    };
-
-    const test = {
-        type: jsPsychAudioKeyboardResponse,
-        stimulus: jsPsych.timelineVariable('audio'),
-        choices: ['f', 'j'],
-        prompt: function() {
-            return `
-                <div class="stim-container">
-                    <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
-                    <img src="${jsPsych.timelineVariable('right_img')}" class="stim-image">
-                </div>`;
-        },
-        data: {
-            target: jsPsych.timelineVariable('target_name'),
-            emotion: jsPsych.timelineVariable('emo'),
-            correct_response: jsPsych.timelineVariable('correct_key')
-        },
+    // --- 3. GATEKEEPER (PASSKEY) ---
+    let passkey_correct = false;
+    const passkey_trial = {
+        type: jsPsychSurveyHtmlForm,
+        html: `<div style="padding:20px;"><h2>Enter Access Passkey</h2><input type="text" name="passkey" required></div>`,
+        button_label: 'Verify Key',
         on_finish: function(data) {
-            data.is_correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+            if (data.response.passkey.trim().toUpperCase() === "4GH73") { passkey_correct = true; }
+            else { alert("Invalid Passkey."); }
         }
     };
+    timeline.push({ timeline: [passkey_trial], loop_function: () => !passkey_correct });
+
+    // --- 4. CONSENT & DEMOGRAPHICS ---
+    timeline.push({
+        type: jsPsychSurveyHtmlForm,
+        html: `
+            <div class="consent-container">
+                <h2>Informed Consent</h2>
+                <div class="consent-body">I agree to participate in this study examining Mandarin word learning.</div>
+                <input type="checkbox" name="consent" required> I Agree
+            </div>`,
+        button_label: 'Continue'
+    });
 
     timeline.push({
-        timeline: [fixation, prime, test],
+        type: jsPsychSurveyHtmlForm,
+        html: `
+            <div class="form-question">
+                <label>Age: </label><input type="number" name="age" required><br><br>
+                <label>Gender: </label>
+                <select name="gender" required>
+                    <option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
+                </select>
+            </div>`,
+        button_label: 'Continue to Instructions'
+    });
+
+    // --- 5. INSTRUCTIONS & AUDIO CHECK LOOP ---
+    let return_to_instructions = false;
+    const instructions = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: "<h2>Instructions</h2><p>Match the Mandarin sound to the image using F (Left) or J (Right).</p>",
+        choices: ['Continue to Audio Check']
+    };
+
+    const audio_check = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: `
+            <div style="text-align:center;">
+                <h3>Audio Practice</h3>
+                <img src="assets/example/example_carrot.png" style="width:200px;"><br>
+                <audio id="audio_p" src="assets/example/example_carrot.mp3"></audio>
+                <button type="button" class="custom-submit-btn" onclick="document.getElementById('audio_p').play()">🔊 Play Sound</button>
+                <p>If you hear 'carrot', you would press 'F' in the real task.</p>
+            </div>`,
+        choices: ['Return to Instructions', 'I hear clearly - Begin'],
+        on_finish: (data) => { return_to_instructions = (data.response === 0); }
+    };
+    timeline.push({ timeline: [instructions, audio_check], loop_function: () => return_to_instructions });
+
+    // --- 6. PRELOAD ---
+    timeline.push({ type: jsPsychPreload, auto_preload: true });
+
+    // --- 7. MAIN PROCEDURE ---
+    const procedure = {
+        timeline: [
+            { type: jsPsychHtmlKeyboardResponse, stimulus: '<div class="fixation">+</div>', choices: "NO_KEYS", trial_duration: 500 },
+            { 
+                type: jsPsychHtmlKeyboardResponse, 
+                stimulus: () => {
+                    const emo = jsPsych.timelineVariable('emo');
+                    const idx = Math.floor(Math.random() * 12) + 1;
+                    return `<img src="assets/primes/${emo}/${emo}_${idx}.jpg" class="prime-img">`;
+                }, 
+                choices: "NO_KEYS", trial_duration: RUNTIME_CONFIG.primeDuration 
+            },
+            {
+                type: jsPsychAudioKeyboardResponse,
+                stimulus: jsPsych.timelineVariable('audio'),
+                choices: ['f', 'j'],
+                prompt: () => `<div class="stim-container"><img src="${jsPsych.timelineVariable('left_img')}" class="stim-image"><img src="${jsPsych.timelineVariable('right_img')}" class="stim-image"></div>`,
+                data: { phase: 'test', target: jsPsych.timelineVariable('target_name'), emotion: jsPsych.timelineVariable('emo') },
+                on_finish: (data) => { data.correct = jsPsych.pluginAPI.compareKeys(data.response, jsPsych.timelineVariable('correct_key')); }
+            }
+        ],
         timeline_variables: generateTrialVariables(),
         randomize_order: true,
         repetitions: RUNTIME_CONFIG.numBlocks
-    });
+    };
+    timeline.push(procedure);
 
-    // 6. DATA SAVE (Manual call via Pipe Plugin at the end)
+    // --- 8. SAVE DATA ---
     timeline.push({
         type: jsPsychPipe,
         action: "save",
         experiment_id: "CyKKMP5vc3rx",
         filename: `${subject_id}.csv`,
         data_string: () => jsPsych.data.get().csv()
+    });
+
+    // --- 9. COMPLETION ---
+    timeline.push({
+        type: jsPsychHtmlButtonResponse,
+        stimulus: "<h2>Finished!</h2><p>Your completion code is: <b>123456</b></p>",
+        choices: ['Exit']
     });
 
     jsPsych.run(timeline);
