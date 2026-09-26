@@ -11,7 +11,7 @@
     <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.0.3"></script>
     
     <!-- DataPipe Plugin & Extension -->
-    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script> 
+    <script src="https://unpkg.com/@jspsych/extension-pipe@0.2.0"></script>
     
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
     
@@ -35,6 +35,153 @@
     const jsPsych = initJsPsych({
         extensions: [
             {
+                type: jsPsychPipe,
+                params: {
+                    experiment_id: "CyKKMP5vc3rx", // Your specific DataPipe ID
+                    filename: `${subject_id}.csv`
+                }
+            }
+        ]
+    });
+
+    const RUNTIME_CONFIG = {
+        primeDuration: 1000,
+        numBlocks: 4 // Total trials = 16 items * 4 blocks = 64
+    };
+
+    // 2. STIMULI DEFINITION (Balanced 16 Items)
+    const targetItems = [
+        { name: 'cow', cat: 'mammal', complexity: 2.84 }, { name: 'pear', cat: 'fruit', complexity: 2.23 },
+        { name: 'nose', cat: 'body', complexity: 1.88 }, { name: 'chair', cat: 'furniture', complexity: 2.32 },
+        { name: 'elephant', cat: 'mammal', complexity: 2.91 }, { name: 'apple', cat: 'fruit', complexity: 2.39 },
+        { name: 'ear', cat: 'body', complexity: 2.38 }, { name: 'table', cat: 'furniture', complexity: 2.19 },
+        { name: 'rabbit', cat: 'mammal', complexity: 3.22 }, { name: 'banana', cat: 'fruit', complexity: 2.36 },
+        { name: 'chin', cat: 'body', complexity: 1.88 }, { name: 'bottle', cat: 'furniture', complexity: 1.74 },
+        { name: 'sheep', cat: 'mammal', complexity: 3.04 }, { name: 'mushroom', cat: 'fruit', complexity: 2.16 },
+        { name: 'finger', cat: 'body', complexity: 2.73 }, { name: 'lamp', cat: 'furniture', complexity: 2.19 }
+    ];
+
+    const activeEmotions = ['neutral', 'disgust', 'fear', 'happy'];
+
+    // 3. AFFECTIVE MAPPING (1:1 per Subject)
+    function getBalancedMapping() {
+        let mapping = {};
+        const categories = ['mammal', 'fruit', 'body', 'furniture'];
+        categories.forEach(category => {
+            let itemsInCategory = targetItems.filter(i => i.cat === category);
+            let shuffledEmos = jsPsych.randomization.shuffle(activeEmotions);
+            itemsInCategory.forEach((item, index) => {
+                mapping[item.name] = shuffledEmos[index];
+            });
+        });
+        return mapping;
+    }
+    const currentMapping = getBalancedMapping();
+
+    // 4. TRIAL VARIABLE GENERATION
+    function generateTrialVariables() {
+        return targetItems.map(item => {
+            const possibleFoils = targetItems.filter(f => f.cat !== item.cat);
+            const foil = jsPsych.randomization.sampleWithoutReplacement(possibleFoils, 1)[0];
+            const targetIsLeft = Math.random() < 0.5;
+            return {
+                target_name: item.name, target_cat: item.cat, target_comp: item.complexity,
+                audio: `assets/audio/${item.name}.mp3`,
+                emo: currentMapping[item.name],
+                left_img: targetIsLeft ? `assets/stims/${item.cat}/${item.cat}_${item.name}.png` : `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`,
+                right_img: targetIsLeft ? `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png` : `assets/stims/${item.cat}/${item.cat}_${item.name}.png`,
+                correct_key: targetIsLeft ? 'f' : 'j'
+            };
+        });
+    }
+
+    // 5. TIMELINE COMPONENTS
+    const timeline = [];
+
+    // Preload
+    timeline.push({
+        type: jsPsychPreload,
+        auto_preload: true,
+        message: "Loading audio and images... Please wait."
+    });
+
+    // Consent/Demographics (Placeholder - Add your existing HTML forms here)
+
+    // Fixation
+    const fixation = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: '<div class="fixation">+</div>',
+        choices: "NO_KEYS",
+        trial_duration: 500
+    };
+
+    // Prime
+    const prime = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: function() {
+            const emo = jsPsych.timelineVariable('emo');
+            const randIdx = Math.floor(Math.random() * 12) + 1;
+            return `<img src="assets/primes/${emo}/${emo}_${randIdx}.jpg" class="prime-img">`;
+        },
+        choices: "NO_KEYS",
+        trial_duration: RUNTIME_CONFIG.primeDuration
+    };
+
+    // 2-AFC Test Trial
+    const test = {
+        type: jsPsychAudioKeyboardResponse,
+        stimulus: jsPsych.timelineVariable('audio'),
+        choices: ['f', 'j'],
+        prompt: function() {
+            return `
+                <div class="stim-container">
+                    <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
+                    <img src="${jsPsych.timelineVariable('right_img')}" class="stim-image">
+                </div>
+                <div style="display:flex; justify-content: space-around; width:100%; font-size: 20px; font-weight:bold;">
+                    <div>Press F</div><div>Press J</div>
+                </div>`;
+        },
+        data: {
+            phase: 'learning',
+            target: jsPsych.timelineVariable('target_name'),
+            emotion: jsPsych.timelineVariable('emo'),
+            category: jsPsych.timelineVariable('target_cat'),
+            complexity: jsPsych.timelineVariable('target_comp'),
+            correct_response: jsPsych.timelineVariable('correct_key')
+        },
+        on_finish: function(data) {
+            data.is_correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+        }
+    };
+
+    // Main Procedure
+    timeline.push({
+        timeline: [fixation, prime, test],
+        timeline_variables: generateTrialVariables(),
+        randomize_order: true,
+        repetitions: RUNTIME_CONFIG.numBlocks
+    });
+
+    // 6. FINAL DATA SAVE (Crucial for Dataverse push)
+    timeline.push({
+        type: jsPsychPipe,
+        action: "save",
+        experiment_id: "CyKKMP5vc3rx",
+        filename: `${subject_id}.csv`,
+        data_string: () => jsPsych.data.get().csv()
+    });
+
+    // Final Message
+    timeline.push({
+        type: jsPsychHtmlButtonResponse,
+        stimulus: "<h3>Thank you!</h3><p>Your data has been securely saved to the repository.</p>",
+        choices: ["Finish"]
+    });
+
+    jsPsych.run(timeline);
+</script>
+</html>            {
                 type: jsPsychPipe,
                 params: {
                     experiment_id: "CyKKMP5vc3rx", // Your specific DataPipe ID
