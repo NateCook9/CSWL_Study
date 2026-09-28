@@ -434,7 +434,7 @@
     // --- 7. PRELOAD ASSETS ---
     timeline.push({ type: jsPsychPreload, auto_preload: true });
 
-    // --- 8. MAIN PROCEDURE ---
+// --- 8. MAIN PROCEDURE ---
     const procedure = {
         timeline: [
             { type: jsPsychHtmlKeyboardResponse, stimulus: '<div class="fixation">+</div>', choices: "NO_KEYS", trial_duration: 500 },
@@ -452,9 +452,19 @@
                 type: jsPsychAudioKeyboardResponse,
                 stimulus: jsPsych.timelineVariable('audio'),
                 choices: ['f', 'j'],
+                trial_duration: 4000,
+                response_ends_trial: true,
                 prompt: () => `<div class="stim-container"><img src="${jsPsych.timelineVariable('left_img')}" class="stim-image"><img src="${jsPsych.timelineVariable('right_img')}" class="stim-image"></div>`,
                 data: { phase: 'test', target: jsPsych.timelineVariable('target_name'), emotion: jsPsych.timelineVariable('emo') },
-                on_finish: (data) => { data.correct = jsPsych.pluginAPI.compareKeys(data.response, jsPsych.timelineVariable('correct_key')); }
+                on_finish: function(data) {
+                    if (data.response === null) {
+                        data.correct = false;
+                        data.timed_out = true;
+                    } else {
+                        data.correct = jsPsych.pluginAPI.compareKeys(data.response, jsPsych.timelineVariable('correct_key'));
+                        data.timed_out = false;
+                    }
+                }
             }
         ],
         timeline_variables: generateTrialVariables(),
