@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title>Mandarin Statistical Learning Task</title>
     <!-- Core jsPsych -->
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
@@ -19,20 +20,114 @@
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
     
     <style>
-        body { background-color: #f4f7f6; font-family: 'Helvetica Neue', Arial, sans-serif; }
-        .jspsych-content { max-width: 800px; }
-        .prime-img { height: 350px; width: auto; border: 5px solid #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .stim-container { display: flex; justify-content: space-around; align-items: center; width: 100%; margin: 30px 0; }
-        .stim-image { width: 280px; height: auto; border: 3px solid #fff; border-radius: 10px; }
-        .fixation { font-size: 72px; font-weight: 300; color: #555; }
-        .consent-body { text-align: left; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .form-question { margin-bottom: 20px; text-align: left; background: #fff; padding: 18px; border-radius: 8px; }
-        .custom-submit-btn { background-color: #333; color: #fff; padding: 0.6em 1.2em; font-size: 15px; cursor: pointer; border: none; border-radius: 4px; }
+        body { 
+            background-color: #f4f7f6; 
+            font-family: 'Helvetica Neue', Arial, sans-serif; 
+            color: #333;
+        }
+        .jspsych-content { 
+            max-width: 800px; 
+        }
+        .prime-img { 
+            height: 350px; 
+            width: auto; 
+            border: 5px solid #fff; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .stim-container { 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            width: 100%; 
+            margin: 25px 0; 
+        }
+        .stim-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .stim-image { 
+            width: 280px; 
+            height: auto; 
+            border: 3px solid #fff; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .key-label {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+        .fixation { 
+            font-size: 72px; 
+            font-weight: 300; 
+            color: #555; 
+        }
+        .consent-container, .demographics-container {
+            text-align: left;
+            max-width: 750px;
+            margin: auto;
+        }
+        .consent-body { 
+            text-align: left; 
+            background: #fff; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+            margin-bottom: 20px; 
+            line-height: 1.6;
+        }
+        .form-question { 
+            margin-bottom: 20px; 
+            text-align: left; 
+            background: #fff; 
+            padding: 18px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .form-question label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .form-question input[type="number"], 
+        .form-question input[type="text"], 
+        .form-question select {
+            width: 100%;
+            max-width: 400px;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .checkbox-group div {
+            margin-bottom: 8px;
+        }
+        .checkbox-group label {
+            display: inline;
+            margin-left: 8px;
+            font-weight: normal;
+        }
+        .custom-submit-btn { 
+            background-color: #333; 
+            color: #fff; 
+            padding: 0.8em 1.6em; 
+            font-size: 15px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 4px; 
+            transition: background-color 0.2s ease;
+        }
+        .custom-submit-btn:hover {
+            background-color: #555;
+        }
     </style>
 </head>
 <body></body>
 <script>
-    // 1. INITIALIZE ID AND CONFIG (Prevents ReferenceError)
+    // 1. INITIALIZE ID AND CONFIG
     const subject_id = "sub-" + Math.floor(Math.random() * 1000000).toString();
 
     const jsPsych = initJsPsych({
@@ -103,67 +198,243 @@
     let passkey_correct = false;
     const passkey_trial = {
         type: jsPsychSurveyHtmlForm,
-        html: `<div style="padding:20px;"><h2>Enter Access Passkey</h2><input type="text" name="passkey" required></div>`,
+        html: `<div style="padding:20px; text-align: center;"><h2>Enter Access Passkey</h2><input type="text" name="passkey" style="padding: 8px; font-size: 16px;" required></div>`,
         button_label: 'Verify Key',
         on_finish: function(data) {
-            if (data.response.passkey.trim().toUpperCase() === "4GH73") { passkey_correct = true; }
-            else { alert("Invalid Passkey."); }
+            if (data.response.passkey.trim().toUpperCase() === "4GH73") { 
+                passkey_correct = true; 
+            } else { 
+                alert("Invalid Passkey."); 
+            }
         }
     };
     timeline.push({ timeline: [passkey_trial], loop_function: () => !passkey_correct });
 
-    // --- 4. CONSENT & DEMOGRAPHICS ---
-    timeline.push({
+    // --- 4. INFORMED CONSENT BLOCK ---
+    const consent_trial = {
         type: jsPsychSurveyHtmlForm,
+        button_label: 'hidden',
+        on_start: function() {
+            const style = document.createElement('style');
+            style.id = 'hide-native-btn-consent';
+            style.innerHTML = '#jspsych-survey-html-form-next { display: none !important; }';
+            document.head.appendChild(style);
+        },
         html: `
             <div class="consent-container">
-                <h2>Informed Consent</h2>
-                <div class="consent-body">I agree to participate in this study examining Mandarin word learning.</div>
-                <input type="checkbox" name="consent" required> I Agree
-            </div>`,
-        button_label: 'Continue'
-    });
+                <h2>Informed Consent & Eligibility</h2>
+                <div class="consent-body">
+                    <p>Please read the following information carefully before deciding whether to participate in this research study:</p>
+                    <ul>
+                        <li>
+                            <strong>Eligibility Requirements:</strong>
+                            <ul> 
+                                <li>Participants must be at least 18 years old.</li>
+                                <li>Participants must complete this experiment on a computer (e.g., not a tablet or smartphone).</li>
+                                <li>Participants must have <strong>zero prior familiarity or knowledge of Mandarin Chinese</strong>.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Task Description:</strong> You will listen to short spoken Mandarin audio words while viewing images on screen and matching sound-meaning pairs using keyboard responses ('F' and 'J').</li>
+                        <li><strong>Duration:</strong> The study takes approximately <strong>10 minutes</strong> to complete.</li>
+                        <li><strong>Risks & Confidentiality:</strong> There are no anticipated physical or psychological risks beyond typical computer use. Data is transferred via DataPipe and is stored remotely on Open Science Framework. Though we cannot guarantee confidentiality, all collected data is stored securely without personal identifiers.</li>
+                        <li><strong>Benefits:</strong> There are no direct personal benefits from participating in this study other than the monetary compensation provided via Prolific upon completion.</li>
+                    </ul>
+                </div>
 
-    timeline.push({
+                <div class="form-question">
+                    <div class="checkbox-group">
+                        <label style="font-weight: bold; cursor: pointer;">
+                            <input type="checkbox" id="consent-check" name="consent_agreed" value="yes" required>
+                            I confirm that I have read and understood the information above, I meet the eligibility criteria (no prior knowledge of Mandarin Chinese), and I consent to participate in this study.
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="custom-submit-btn">I Agree & Continue</button>
+            </div>`,
+        on_finish: function() {
+            const styleRule = document.getElementById('hide-native-btn-consent');
+            if (styleRule) { styleRule.remove(); }
+        }
+    };
+    timeline.push(consent_trial);
+
+    // --- 5. DEMOGRAPHICS BLOCK ---
+    const demographics_trial = {
         type: jsPsychSurveyHtmlForm,
+        button_label: 'hidden', 
+        on_start: function() {
+            const style = document.createElement('style');
+            style.id = 'hide-native-btn';
+            style.innerHTML = '#jspsych-survey-html-form-next { display: none !important; }';
+            document.head.appendChild(style);
+        },
         html: `
-            <div class="form-question">
-                <label>Age: </label><input type="number" name="age" required><br><br>
-                <label>Gender: </label>
-                <select name="gender" required>
-                    <option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
-                </select>
-            </div>`,
-        button_label: 'Continue to Instructions'
-    });
+            <div class="demographics-container">
+                <h2>Demographic Information</h2>
+                <p>Please fill out the details below before we begin the task:</p>
+                
+                <div class="form-question">
+                    <label for="age">How old are you?</label>
+                    <input type="number" id="age" name="age" min="18" max="100" required>
+                </div>
 
-    // --- 5. INSTRUCTIONS & AUDIO CHECK LOOP ---
+                <div class="form-question">
+                    <label for="gender">How do you describe yourself?</label>
+                    <select id="gender" name="gender" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="non-binary">Non-binary/third gender</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                    </select>
+                </div>
+
+                <div class="form-question">
+                    <label>Choose one or more races that you consider yourself to be:</label>
+                    <div class="checkbox-group">
+                        <div><input type="checkbox" id="race_white" name="race" value="white"><label for="race_white">White or Caucasian</label></div>
+                        <div><input type="checkbox" id="race_black" name="race" value="black"><label for="race_black">Black or African American</label></div>
+                        <div><input type="checkbox" id="race_native" name="race" value="native_american"><label for="race_native">American Indian/Native American or Alaskan Native</label></div>
+                        <div><input type="checkbox" id="race_asian" name="race" value="asian"><label for="race_asian">Asian</label></div>
+                        <div><input type="checkbox" id="race_hawaiian" name="race" value="pacific_islander"><label for="race_hawaiian">Native Hawaiian or other Pacific Islander</label></div>
+                        <div><input type="checkbox" id="race_other" name="race" value="other"><label for="race_other">Other</label></div>
+                        <div><input type="checkbox" id="race_pns" name="race" value="prefer_not_to_say"><label for="race_pns">Prefer not to say</label></div>
+                    </div>
+                </div>
+
+                <div class="form-question">
+                    <label for="hispanic">Are you of Spanish, Hispanic, or Latino origin?</label>
+                    <select id="hispanic" name="hispanic" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                    </select>
+                </div>
+
+                <div class="form-question">
+                    <label for="education">What is the highest level of education you have completed?</label>
+                    <select id="education" name="education" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="some_high_school">Some high school or less</option>
+                        <option value="high_school_diploma">High school diploma or GED</option>
+                        <option value="some_college">Some college, but no degree</option>
+                        <option value="associates_technical">Associates or technical degree</option>
+                        <option value="bachelors">Bachelor’s degree</option>
+                        <option value="graduate">Graduate or professional degree (MA, MS, MBA, PhD, JD, MD, DDS etc.)</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="custom-submit-btn">Continue to Experiment</button>
+            </div>`,
+        on_finish: function(data) {
+            const styleRule = document.getElementById('hide-native-btn');
+            if (styleRule) { styleRule.remove(); }
+        
+            const selectedRaces = Array.isArray(data.response.race) ? data.response.race.join(',') : data.response.race;
+        
+            jsPsych.data.addProperties({
+                participant_age: data.response.age,
+                participant_gender: data.response.gender,
+                participant_race: selectedRaces || 'not_specified',
+                participant_hispanic: data.response.hispanic,
+                participant_education: data.response.education
+            });
+        }
+    };
+    timeline.push(demographics_trial);
+
+    // --- 6. INSTRUCTIONS & AUDIO PRACTICE LOOP ---
     let return_to_instructions = false;
+
     const instructions = {
         type: jsPsychHtmlButtonResponse,
-        stimulus: "<h2>Instructions</h2><p>Match the Mandarin sound to the image using F (Left) or J (Right).</p>",
-        choices: ['Continue to Audio Check']
+        stimulus: function() {
+            return `
+                <div style="text-align: left; max-width: 700px; margin: auto;">
+                    <h2>Study Instructions</h2>
+                    <ul>
+                        <li>At the beginning of each trial, you will see a <strong>fixation cross (+)</strong>.</li>
+                        <li>Next, a photo will flash briefly. This photo is not needed for the task and may be disregarded.</li>
+                        <li>Then, you will hear a Mandarin word and see two images. Throughout the experiment, <strong>your task is to match the Mandarin word you hear with one of the images.</strong></li>
+                        <li>Press <strong>'F'</strong> if the word matches the <strong>left</strong> image.</li>
+                        <li>Press <strong>'J'</strong> if the word matches the <strong>right</strong> image.</li>
+                    </ul>
+                    <p>Please try to be as accurate and as fast as possible.</p>
+                </div>`;
+        },
+        choices: ['Continue to Audio Check'],
+        on_finish: function() {
+            return_to_instructions = false;
+        }
     };
 
-    const audio_check = {
+    const audio_test_trial = {
         type: jsPsychHtmlButtonResponse,
-        stimulus: `
-            <div style="text-align:center;">
-                <h3>Audio Practice</h3>
-                <img src="assets/example/example_carrot.png" style="width:200px;"><br>
-                <audio id="audio_p" src="assets/example/example_carrot.mp3"></audio>
-                <button type="button" class="custom-submit-btn" onclick="document.getElementById('audio_p').play()">🔊 Play Sound</button>
-                <p>If you hear 'carrot', you would press 'F' in the real task.</p>
-            </div>`,
-        choices: ['Return to Instructions', 'I hear clearly - Begin'],
-        on_finish: (data) => { return_to_instructions = (data.response === 0); }
+        stimulus: function() {
+            return `
+                <div style="max-width: 750px; margin: auto; text-align: center;">
+                    <h2>Audio & Practice Check</h2>
+                    <p style="text-align: left; font-size: 16px; line-height: 1.5;">
+                        This resembles a typical trial of this experiment. You will hear an audio clip and match it to one of the images. 
+                        In this case, the Mandarin Chinese word means <strong>'carrot'</strong>, so you would press <strong>'F'</strong> on your keyboard to select the image of the carrot.
+                    </p>
+                    <p style="text-align: left; font-size: 15px; color: #d9534f; font-weight: bold;">
+                        Please click the button below to test your audio. Ensure your sound is turned on and clear before proceeding!
+                    </p>
+                    
+                    <div class="stim-container">
+                        <div class="stim-wrapper">
+                            <img src="assets/example/example_carrot.png" class="stim-image" alt="Carrot">
+                            <div class="key-label">Press <strong>'F'</strong> if the word matches the <strong>left</strong> image.</div>
+                        </div>
+                        <div class="stim-wrapper">
+                            <img src="assets/example/example_tunnel.png" class="stim-image" alt="Tunnel">
+                            <div class="key-label">Press <strong>'J'</strong> if the word matches the <strong>right</strong> image.</div>
+                        </div>
+                    </div>
+                    
+                    <audio id="practice-audio-elem" src="assets/example/example_carrot.mp3" preload="auto"></audio>
+                    <button type="button" class="custom-submit-btn" style="margin-bottom: 20px; background-color: #007bff;" onclick="document.getElementById('practice-audio-elem').play()">
+                        🔊 Test Audio
+                    </button>
+                </div>
+            `;
+        },
+        choices: ['Return to Instructions', 'I can hear the audio clearly - Begin Experiment'],
+        on_finish: function(data) {
+            if (data.response === 0) {
+                return_to_instructions = true;
+            } else {
+                return_to_instructions = false;
+                
+                // SAFARI WEBAUDIO UNLOCK: Resume context directly inside user gesture
+                try {
+                    var ctx = jsPsych.pluginAPI.audioContext();
+                    if (ctx !== null && ctx.state === 'suspended') {
+                        ctx.resume();
+                    }
+                } catch(e) {
+                    console.log("AudioContext resume attempted:", e);
+                }
+            }
+        }
     };
-    timeline.push({ timeline: [instructions, audio_check], loop_function: () => return_to_instructions });
 
-    // --- 6. PRELOAD ---
+    const instructions_practice_loop = {
+        timeline: [instructions, audio_test_trial],
+        loop_function: function() {
+            return return_to_instructions;
+        }
+    };
+    timeline.push(instructions_practice_loop);
+
+    // --- 7. PRELOAD ASSETS ---
     timeline.push({ type: jsPsychPreload, auto_preload: true });
 
-    // --- 7. MAIN PROCEDURE ---
+    // --- 8. MAIN PROCEDURE ---
     const procedure = {
         timeline: [
             { type: jsPsychHtmlKeyboardResponse, stimulus: '<div class="fixation">+</div>', choices: "NO_KEYS", trial_duration: 500 },
@@ -174,7 +445,8 @@
                     const idx = Math.floor(Math.random() * 12) + 1;
                     return `<img src="assets/primes/${emo}/${emo}_${idx}.jpg" class="prime-img">`;
                 }, 
-                choices: "NO_KEYS", trial_duration: RUNTIME_CONFIG.primeDuration 
+                choices: "NO_KEYS", 
+                trial_duration: RUNTIME_CONFIG.primeDuration 
             },
             {
                 type: jsPsychAudioKeyboardResponse,
@@ -191,7 +463,7 @@
     };
     timeline.push(procedure);
 
-    // --- 8. SAVE DATA ---
+    // --- 9. SAVE DATA VIA DATAPIPE ---
     timeline.push({
         type: jsPsychPipe,
         action: "save",
@@ -200,7 +472,7 @@
         data_string: () => jsPsych.data.get().csv()
     });
 
-    // --- 9. COMPLETION ---
+    // --- 10. COMPLETION ---
     timeline.push({
         type: jsPsychHtmlButtonResponse,
         stimulus: "<h2>Finished!</h2><p>Your completion code is: <b>123456</b></p>",
