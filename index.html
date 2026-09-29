@@ -57,15 +57,10 @@
             font-size: 14px;
             color: #555;
         }
-        .fixation { 
-            font-size: 72px; 
-            font-weight: 300; 
-            color: #555; 
-        }
         .consent-container, .demographics-container {
             text-align: left;
             max-width: 750px;
-            margin: auto;
+            margin: 80px auto; /* Added ~1 inch vertical spacing */
         }
         .consent-body { 
             text-align: left; 
@@ -141,7 +136,7 @@
         numBlocks: 4 
     };
 
-    // 2. STIMULI (Balanced 16 Items)
+    // 2. STIMULI (Balanced 16 Items - Updated with Pepper/Mushroom)
     const targetItems = [
         // Animals
         { name: 'cow', cat: 'animal', complexity: 2.84 },
@@ -173,7 +168,6 @@
     // Balanced Mapping: Ensures 1 item of each category per emotion
     function getBalancedMapping() {
         let mapping = {};
-        // FIX: Updated to match your new 'cat' attributes
         const categories = ['animal', 'food', 'body', 'household']; 
         categories.forEach(category => {
             let itemsInCategory = targetItems.filter(i => i.cat === category);
@@ -229,6 +223,8 @@
             style.id = 'hide-native-btn-consent';
             style.innerHTML = '#jspsych-survey-html-form-next { display: none !important; }';
             document.head.appendChild(style);
+            // Ensure focus is clear so blinking cursors don't carry over
+            document.activeElement.blur();
         },
         html: `
             <div class="consent-container">
@@ -366,8 +362,7 @@
                 <div style="text-align: left; max-width: 700px; margin: auto;">
                     <h2>Study Instructions</h2>
                     <ul>
-                        <li>At the beginning of each trial, you will see a <strong>fixation cross (+)</strong>.</li>
-                        <li>Next, a photo will flash briefly. This photo is not needed for the task and may be disregarded.</li>
+                        <li>At the beginning of each trial, you will see a brief blank screen followed by a photo flashing briefly. This photo is not needed for the task and may be disregarded.</li>
                         <li>Then, you will hear a Mandarin word and see two images. Throughout the experiment, <strong>your task is to match the Mandarin word you hear with one of the images.</strong></li>
                         <li>Press <strong>'F'</strong> if the word matches the <strong>left</strong> image.</li>
                         <li>Press <strong>'J'</strong> if the word matches the <strong>right</strong> image.</li>
@@ -440,14 +435,38 @@
     };
     timeline.push(instructions_practice_loop);
 
-    // --- 7. PRELOAD ASSETS ---
-    // Note: To prevent white flashes, consider explicitly mapping your asset arrays here later.
-    timeline.push({ type: jsPsychPreload, auto_preload: true });
+    // --- 7. EXPLICIT PRELOADER (Fixes broken images) ---
+    // Generate arrays of ALL images and audio to force jsPsych to cache them
+    const allPrimeImages = [];
+    activeEmotions.forEach(emo => {
+        for (let i = 1; i <= 12; i++) {
+            allPrimeImages.push(`assets/primes/${emo}/${emo}_${i}.jpg`);
+        }
+    });
+    
+    const allStimImages = targetItems.map(item => `assets/stims/${item.cat}/${item.cat}_${item.name}.png`);
+    allStimImages.push('assets/example/example_carrot.png', 'assets/example/example_tunnel.png');
+    
+    const allAudio = targetItems.map(item => `assets/audio/${item.name}.mp3`);
+    allAudio.push('assets/example/example_carrot.mp3');
+
+    timeline.push({ 
+        type: jsPsychPreload, 
+        auto_preload: true,
+        images: allPrimeImages.concat(allStimImages),
+        audio: allAudio
+    });
 
     // --- 8. MAIN PROCEDURE ---
     const procedure = {
         timeline: [
-            { type: jsPsychHtmlKeyboardResponse, stimulus: '<div class="fixation">+</div>', choices: "NO_KEYS", trial_duration: 500 },
+            // ISI: Blank screen instead of blinking element/cross
+            { 
+                type: jsPsychHtmlKeyboardResponse, 
+                stimulus: '<div style="height: 72px;"></div>', 
+                choices: "NO_KEYS", 
+                trial_duration: 500 
+            },
             { 
                 type: jsPsychHtmlKeyboardResponse, 
                 stimulus: () => {
@@ -464,7 +483,7 @@
                 choices: ['f', 'j'],
                 trial_duration: 4000,
                 response_ends_trial: true,
-                trial_ends_after_audio: false, // FIX: Added to prevent the trial waiting for audio to complete
+                trial_ends_after_audio: false, // Ensures keypress truncates playback
                 prompt: () => `<div class="stim-container"><img src="${jsPsych.timelineVariable('left_img')}" class="stim-image"><img src="${jsPsych.timelineVariable('right_img')}" class="stim-image"></div>`,
                 data: { phase: 'test', target: jsPsych.timelineVariable('target_name'), emotion: jsPsych.timelineVariable('emo') },
                 on_finish: function(data) {
