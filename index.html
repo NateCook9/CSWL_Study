@@ -25,9 +25,7 @@
             font-family: 'Helvetica Neue', Arial, sans-serif; 
             color: #333;
         }
-        .jspsych-content { 
-            max-width: 800px; 
-        }
+        .jspsych-content { max-width: 800px; }
         .prime-img { 
             height: 350px; 
             width: auto; 
@@ -102,9 +100,7 @@
             box-sizing: border-box;
             font-size: 14px;
         }
-        .checkbox-group div {
-            margin-bottom: 8px;
-        }
+        .checkbox-group div { margin-bottom: 8px; }
         .checkbox-group label {
             display: inline;
             margin-left: 8px;
@@ -120,9 +116,7 @@
             border-radius: 4px; 
             transition: background-color 0.2s ease;
         }
-        .custom-submit-btn:hover {
-            background-color: #555;
-        }
+        .custom-submit-btn:hover { background-color: #555; }
     </style>
 </head>
 <body></body>
@@ -148,7 +142,7 @@
     };
 
     // 2. STIMULI (Balanced 16 Items)
-const targetItems = [
+    const targetItems = [
         // Animals
         { name: 'cow', cat: 'animal', complexity: 2.84 },
         { name: 'zebra', cat: 'animal', complexity: 3.02 },
@@ -179,7 +173,8 @@ const targetItems = [
     // Balanced Mapping: Ensures 1 item of each category per emotion
     function getBalancedMapping() {
         let mapping = {};
-        const categories = ['mammal', 'fruit', 'body', 'furniture'];
+        // FIX: Updated to match your new 'cat' attributes
+        const categories = ['animal', 'food', 'body', 'household']; 
         categories.forEach(category => {
             let itemsInCategory = targetItems.filter(i => i.cat === category);
             let shuffledEmos = jsPsych.randomization.shuffle(activeEmotions);
@@ -425,7 +420,6 @@ const targetItems = [
             } else {
                 return_to_instructions = false;
                 
-                // SAFARI WEBAUDIO UNLOCK: Resume context directly inside user gesture
                 try {
                     var ctx = jsPsych.pluginAPI.audioContext();
                     if (ctx !== null && ctx.state === 'suspended') {
@@ -447,9 +441,10 @@ const targetItems = [
     timeline.push(instructions_practice_loop);
 
     // --- 7. PRELOAD ASSETS ---
+    // Note: To prevent white flashes, consider explicitly mapping your asset arrays here later.
     timeline.push({ type: jsPsychPreload, auto_preload: true });
 
-// --- 8. MAIN PROCEDURE ---
+    // --- 8. MAIN PROCEDURE ---
     const procedure = {
         timeline: [
             { type: jsPsychHtmlKeyboardResponse, stimulus: '<div class="fixation">+</div>', choices: "NO_KEYS", trial_duration: 500 },
@@ -469,6 +464,7 @@ const targetItems = [
                 choices: ['f', 'j'],
                 trial_duration: 4000,
                 response_ends_trial: true,
+                trial_ends_after_audio: false, // FIX: Added to prevent the trial waiting for audio to complete
                 prompt: () => `<div class="stim-container"><img src="${jsPsych.timelineVariable('left_img')}" class="stim-image"><img src="${jsPsych.timelineVariable('right_img')}" class="stim-image"></div>`,
                 data: { phase: 'test', target: jsPsych.timelineVariable('target_name'), emotion: jsPsych.timelineVariable('emo') },
                 on_finish: function(data) {
