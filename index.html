@@ -148,15 +148,30 @@
     };
 
     // 2. STIMULI (Balanced 16 Items)
-    const targetItems = [
-        { name: 'cow', cat: 'mammal', comp: 2.84 }, { name: 'pear', cat: 'fruit', comp: 2.23 },
-        { name: 'nose', cat: 'body', comp: 1.88 }, { name: 'chair', cat: 'furniture', comp: 2.32 },
-        { name: 'elephant', cat: 'mammal', comp: 2.91 }, { name: 'apple', cat: 'fruit', comp: 2.39 },
-        { name: 'ear', cat: 'body', comp: 2.38 }, { name: 'table', cat: 'furniture', comp: 2.19 },
-        { name: 'rabbit', cat: 'mammal', comp: 3.22 }, { name: 'banana', cat: 'fruit', comp: 2.36 },
-        { name: 'chin', cat: 'body', comp: 1.88 }, { name: 'bottle', cat: 'furniture', comp: 1.74 },
-        { name: 'sheep', cat: 'mammal', comp: 3.04 }, { name: 'mushroom', cat: 'fruit', comp: 2.16 },
-        { name: 'finger', cat: 'body', comp: 2.73 }, { name: 'lamp', cat: 'furniture', comp: 2.19 }
+const targetItems = [
+        // Animals
+        { name: 'cow', cat: 'animal', complexity: 2.84 },
+        { name: 'zebra', cat: 'animal', complexity: 3.02 },
+        { name: 'elephant', cat: 'animal', complexity: 2.91 },
+        { name: 'kangaroo', cat: 'animal', complexity: 2.84 },
+        
+        // Food
+        { name: 'apple', cat: 'food', complexity: 2.39 },
+        { name: 'banana', cat: 'food', complexity: 2.36 },
+        { name: 'pepper', cat: 'food', complexity: 2.31 },
+        { name: 'mushroom', cat: 'food', complexity: 2.16 },
+        
+        // Body Parts
+        { name: 'finger', cat: 'body', complexity: 2.73 },
+        { name: 'knee', cat: 'body', complexity: 2.23 },
+        { name: 'lips', cat: 'body', complexity: 2.69 },
+        { name: 'fist', cat: 'body', complexity: 2.52 },
+        
+        // Household Objects
+        { name: 'lamp', cat: 'household', complexity: 2.19 },
+        { name: 'curtain', cat: 'household', complexity: 2.38 },
+        { name: 'umbrella', cat: 'household', complexity: 2.39 },
+        { name: 'wallet', cat: 'household', complexity: 2.33 }
     ];
 
     const activeEmotions = ['neutral', 'disgust', 'fear', 'happy'];
