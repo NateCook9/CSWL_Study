@@ -131,17 +131,17 @@
         ]
     });
 
-    // --- SAFARI WEBAUDIO UNLOCK HACK ---
-    // Globally listen for the first click on the page to initialize and resume the WebAudio API context.
-    document.addEventListener('click', function unlockAudio() {
-        try {
-            var ctx = jsPsych.pluginAPI.audioContext();
-            if (ctx && ctx.state === 'suspended') {
-                ctx.resume();
-            }
-        } catch (e) {}
-        document.removeEventListener('click', unlockAudio);
-    }, { once: true });
+    // --- AGGRESSIVE SAFARI WEBAUDIO UNLOCKER ---
+    // Binds to every user interaction to guarantee Safari's audio engine stays awake
+    const unlockAudioContext = () => {
+        const ctx = jsPsych.pluginAPI.audioContext();
+        if (ctx && ctx.state !== 'running') {
+            ctx.resume();
+        }
+    };
+    window.addEventListener('click', unlockAudioContext, true);
+    window.addEventListener('touchstart', unlockAudioContext, true);
+    window.addEventListener('keydown', unlockAudioContext, true);
 
     const RUNTIME_CONFIG = {
         primeDuration: 1000,
