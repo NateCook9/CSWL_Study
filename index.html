@@ -60,7 +60,7 @@
         .consent-container, .demographics-container {
             text-align: left;
             max-width: 750px;
-            margin: 80px auto; 
+            margin: 80px auto; /* Added roughly one inch vertical spacing to top/bottom */
         }
         .consent-body { 
             text-align: left; 
@@ -185,13 +185,19 @@
             const possibleFoils = targetItems.filter(f => f.cat !== item.cat);
             const foil = jsPsych.randomization.sampleWithoutReplacement(possibleFoils, 1)[0];
             const targetIsLeft = Math.random() < 0.5;
+            
+            // Generate visual paths
+            const left_img = targetIsLeft ? `assets/stims/${item.cat}/${item.cat}_${item.name}.png` : `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`;
+            const right_img = targetIsLeft ? `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png` : `assets/stims/${item.cat}/${item.cat}_${item.name}.png`;
+
             return {
-                target_name: item.name, target_cat: item.cat,
+                target_name: item.name, 
+                target_cat: item.cat,
                 audio: `assets/audio/${item.name}.mp3`,
                 emo: currentMapping[item.name],
-                left_img: targetIsLeft ? `assets/stims/${item.cat}/${item.cat}_${item.name}.png` : `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`,
-                right_img: targetIsLeft ? `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png` : `assets/stims/${item.cat}/${item.cat}_${item.name}.png`,
-                correct_key: targetIsLeft ? 'f' : 'j'
+                correct_key: targetIsLeft ? 'f' : 'j',
+                // Pre-generate prompt HTML so we don't have to evaluate timeline variables during runtime
+                prompt_html: `<div class="stim-container"><img src="${left_img}" class="stim-image"><img src="${right_img}" class="stim-image"></div>`
             };
         });
     }
@@ -401,7 +407,6 @@
                     </div>
                     
                     <audio id="practice-audio-elem" src="assets/example/example_carrot.mp3" preload="auto"></audio>
-                    <!-- FIX: Inline onclick unlocks WebAudio context synchronously -->
                     <button type="button" class="custom-submit-btn" style="margin-bottom: 20px; background-color: #007bff;" onclick="document.getElementById('practice-audio-elem').play(); try { jsPsych.pluginAPI.audioContext().resume(); } catch(e) {}">
                         🔊 Test Audio
                     </button>
@@ -446,45 +451,50 @@
     // --- 8. MAIN PROCEDURE ---
     const procedure = {
         timeline: [
+            // ISI: Blank screen instead of blinking cross
             { 
                 type: jsPsychHtmlKeyboardResponse, 
-                stimulus: '<div style="height: 72px;"></div>', // Invisible div to hold spacing without flashing cross
+                stimulus: '<div style="height: 72px;"></div>', 
                 choices: "NO_KEYS", 
                 trial_duration: 500 
             },
+            // Emotional Prime
             { 
                 type: jsPsychHtmlKeyboardResponse, 
-                stimulus: () => {
-                    // FIX: evaluateTimelineVariable properly unwraps the object
-                    const emo = jsPsych.evaluateTimelineVariable('emo');
-                    const idx = Math.floor(Math.random() * 12) + 1;
-                    return `<img src="assets/primes/${emo}/${emo}_${idx}.jpg" class="prime-img">`;
-                }, 
+                stimulus: '', // Placeholder, rendered cleanly in on_start
                 choices: "NO_KEYS", 
-                trial_duration: RUNTIME_CONFIG.primeDuration 
+                trial_duration: RUNTIME_CONFIG.primeDuration,
+                data: {
+                    emotion: jsPsych.timelineVariable('emo') // jsPsych evaluates this securely before on_start
+                },
+                on_start: function(trial) {
+                    const emo = trial.data.emotion;
+                    const idx = Math.floor(Math.random() * 12) + 1;
+                    trial.stimulus = `<img src="assets/primes/${emo}/${emo}_${idx}.jpg" class="prime-img">`;
+                }
             },
+            // Target Selection Trial
             {
                 type: jsPsychAudioKeyboardResponse,
-                stimulus: jsPsych.timelineVariable('audio'), // Direct mapping works here
-                choices: ['f', 'j', 'F', 'J'], // FIX: Captures input even if Caps Lock is active
+                stimulus: jsPsych.timelineVariable('audio'),
+                choices: ['f', 'j', 'F', 'J'], // Includes caps lock safeguard
                 trial_duration: 4000,
                 response_ends_trial: true,
                 trial_ends_after_audio: false, 
-                prompt: () => {
-                    // FIX: evaluateTimelineVariable to render actual string paths
-                    const left_img = jsPsych.evaluateTimelineVariable('left_img');
-                    const right_img = jsPsych.evaluateTimelineVariable('right_img');
-                    return `<div class="stim-container"><img src="${left_img}" class="stim-image"><img src="${right_img}" class="stim-image"></div>`;
+                prompt: jsPsych.timelineVariable('prompt_html'),
+                data: { 
+                    phase: 'test', 
+                    target: jsPsych.timelineVariable('target_name'), 
+                    emotion: jsPsych.timelineVariable('emo'),
+                    correct_key: jsPsych.timelineVariable('correct_key')
                 },
-                data: { phase: 'test', target: jsPsych.timelineVariable('target_name'), emotion: jsPsych.timelineVariable('emo') },
                 on_finish: function(data) {
                     if (data.response === null) {
                         data.correct = false;
                         data.timed_out = true;
                     } else {
-                        // FIX: evaluateTimelineVariable before passing to compareKeys
-                        const correct_key = jsPsych.evaluateTimelineVariable('correct_key');
-                        data.correct = jsPsych.pluginAPI.compareKeys(data.response, correct_key);
+                        // Retrieve the correct key dynamically evaluated in the data object
+                        data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_key);
                         data.timed_out = false;
                     }
                 }
