@@ -60,7 +60,7 @@
         .consent-container, .demographics-container {
             text-align: left;
             max-width: 750px;
-            margin: 80px auto; /* Added ~1 inch vertical spacing */
+            margin: 80px auto; 
         }
         .consent-body { 
             text-align: left; 
@@ -136,7 +136,7 @@
         numBlocks: 4 
     };
 
-    // 2. STIMULI (Balanced 16 Items - Updated with Pepper/Mushroom)
+    // 2. STIMULI (Balanced 16 Items - Updated with Pepper & Mushroom)
     const targetItems = [
         // Animals
         { name: 'cow', cat: 'animal', complexity: 2.84 },
@@ -223,7 +223,6 @@
             style.id = 'hide-native-btn-consent';
             style.innerHTML = '#jspsych-survey-html-form-next { display: none !important; }';
             document.head.appendChild(style);
-            // Ensure focus is clear so blinking cursors don't carry over
             document.activeElement.blur();
         },
         html: `
@@ -402,7 +401,8 @@
                     </div>
                     
                     <audio id="practice-audio-elem" src="assets/example/example_carrot.mp3" preload="auto"></audio>
-                    <button type="button" class="custom-submit-btn" style="margin-bottom: 20px; background-color: #007bff;" onclick="document.getElementById('practice-audio-elem').play()">
+                    <!-- FIX: Inline onclick unlocks WebAudio context synchronously -->
+                    <button type="button" class="custom-submit-btn" style="margin-bottom: 20px; background-color: #007bff;" onclick="document.getElementById('practice-audio-elem').play(); try { jsPsych.pluginAPI.audioContext().resume(); } catch(e) {}">
                         🔊 Test Audio
                     </button>
                 </div>
@@ -410,20 +410,7 @@
         },
         choices: ['Return to Instructions', 'I can hear the audio clearly - Begin Experiment'],
         on_finish: function(data) {
-            if (data.response === 0) {
-                return_to_instructions = true;
-            } else {
-                return_to_instructions = false;
-                
-                try {
-                    var ctx = jsPsych.pluginAPI.audioContext();
-                    if (ctx !== null && ctx.state === 'suspended') {
-                        ctx.resume();
-                    }
-                } catch(e) {
-                    console.log("AudioContext resume attempted:", e);
-                }
-            }
+            return_to_instructions = (data.response === 0);
         }
     };
 
@@ -435,8 +422,7 @@
     };
     timeline.push(instructions_practice_loop);
 
-    // --- 7. EXPLICIT PRELOADER (Fixes broken images) ---
-    // Generate arrays of ALL images and audio to force jsPsych to cache them
+    // --- 7. EXPLICIT PRELOADER ---
     const allPrimeImages = [];
     activeEmotions.forEach(emo => {
         for (let i = 1; i <= 12; i++) {
@@ -460,17 +446,17 @@
     // --- 8. MAIN PROCEDURE ---
     const procedure = {
         timeline: [
-            // ISI: Blank screen instead of blinking element/cross
             { 
                 type: jsPsychHtmlKeyboardResponse, 
-                stimulus: '<div style="height: 72px;"></div>', 
+                stimulus: '<div style="height: 72px;"></div>', // Invisible div to hold spacing without flashing cross
                 choices: "NO_KEYS", 
                 trial_duration: 500 
             },
             { 
                 type: jsPsychHtmlKeyboardResponse, 
                 stimulus: () => {
-                    const emo = jsPsych.timelineVariable('emo');
+                    // FIX: evaluateTimelineVariable properly unwraps the object
+                    const emo = jsPsych.evaluateTimelineVariable('emo');
                     const idx = Math.floor(Math.random() * 12) + 1;
                     return `<img src="assets/primes/${emo}/${emo}_${idx}.jpg" class="prime-img">`;
                 }, 
@@ -479,19 +465,26 @@
             },
             {
                 type: jsPsychAudioKeyboardResponse,
-                stimulus: jsPsych.timelineVariable('audio'),
-                choices: ['f', 'j'],
+                stimulus: jsPsych.timelineVariable('audio'), // Direct mapping works here
+                choices: ['f', 'j', 'F', 'J'], // FIX: Captures input even if Caps Lock is active
                 trial_duration: 4000,
                 response_ends_trial: true,
-                trial_ends_after_audio: false, // Ensures keypress truncates playback
-                prompt: () => `<div class="stim-container"><img src="${jsPsych.timelineVariable('left_img')}" class="stim-image"><img src="${jsPsych.timelineVariable('right_img')}" class="stim-image"></div>`,
+                trial_ends_after_audio: false, 
+                prompt: () => {
+                    // FIX: evaluateTimelineVariable to render actual string paths
+                    const left_img = jsPsych.evaluateTimelineVariable('left_img');
+                    const right_img = jsPsych.evaluateTimelineVariable('right_img');
+                    return `<div class="stim-container"><img src="${left_img}" class="stim-image"><img src="${right_img}" class="stim-image"></div>`;
+                },
                 data: { phase: 'test', target: jsPsych.timelineVariable('target_name'), emotion: jsPsych.timelineVariable('emo') },
                 on_finish: function(data) {
                     if (data.response === null) {
                         data.correct = false;
                         data.timed_out = true;
                     } else {
-                        data.correct = jsPsych.pluginAPI.compareKeys(data.response, jsPsych.timelineVariable('correct_key'));
+                        // FIX: evaluateTimelineVariable before passing to compareKeys
+                        const correct_key = jsPsych.evaluateTimelineVariable('correct_key');
+                        data.correct = jsPsych.pluginAPI.compareKeys(data.response, correct_key);
                         data.timed_out = false;
                     }
                 }
