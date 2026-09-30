@@ -416,7 +416,7 @@
                         </div>
                     </div>
                     
-                    <audio id="practice-audio-elem" src="assets/example/example_carrot.mp3" preload="auto"></audio>
+                    <audio id="practice-audio-elem" src="assets/example/example_carrot.wav” preload="auto"></audio>
                     <button type="button" class="custom-submit-btn" style="margin-bottom: 20px; background-color: #007bff;" onclick="document.getElementById('practice-audio-elem').play();">
                         🔊 Test Audio
                     </button>
@@ -449,7 +449,7 @@
     allStimImages.push('assets/example/example_carrot.png', 'assets/example/example_tunnel.png');
     
     const allAudio = targetItems.map(item => `assets/audio/${item.name}.wav`);
-    allAudio.push('assets/example/example_carrot.mp3');
+    allAudio.push('assets/example/example_carrot.wav);
 
     timeline.push({ 
         type: jsPsychPreload, 
