@@ -60,7 +60,7 @@
         .consent-container, .demographics-container {
             text-align: left;
             max-width: 750px;
-            margin: 80px auto; /* Added roughly one inch vertical spacing to top/bottom */
+            margin: 80px auto; 
         }
         .consent-body { 
             text-align: left; 
@@ -131,6 +131,18 @@
         ]
     });
 
+    // --- SAFARI WEBAUDIO UNLOCK HACK ---
+    // Globally listen for the first click on the page to initialize and resume the WebAudio API context.
+    document.addEventListener('click', function unlockAudio() {
+        try {
+            var ctx = jsPsych.pluginAPI.audioContext();
+            if (ctx && ctx.state === 'suspended') {
+                ctx.resume();
+            }
+        } catch (e) {}
+        document.removeEventListener('click', unlockAudio);
+    }, { once: true });
+
     const RUNTIME_CONFIG = {
         primeDuration: 1000,
         numBlocks: 4 
@@ -186,7 +198,6 @@
             const foil = jsPsych.randomization.sampleWithoutReplacement(possibleFoils, 1)[0];
             const targetIsLeft = Math.random() < 0.5;
             
-            // Generate visual paths
             const left_img = targetIsLeft ? `assets/stims/${item.cat}/${item.cat}_${item.name}.png` : `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`;
             const right_img = targetIsLeft ? `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png` : `assets/stims/${item.cat}/${item.cat}_${item.name}.png`;
 
@@ -196,7 +207,6 @@
                 audio: `assets/audio/${item.name}.mp3`,
                 emo: currentMapping[item.name],
                 correct_key: targetIsLeft ? 'f' : 'j',
-                // Pre-generate prompt HTML so we don't have to evaluate timeline variables during runtime
                 prompt_html: `<div class="stim-container"><img src="${left_img}" class="stim-image"><img src="${right_img}" class="stim-image"></div>`
             };
         });
@@ -407,7 +417,7 @@
                     </div>
                     
                     <audio id="practice-audio-elem" src="assets/example/example_carrot.mp3" preload="auto"></audio>
-                    <button type="button" class="custom-submit-btn" style="margin-bottom: 20px; background-color: #007bff;" onclick="document.getElementById('practice-audio-elem').play(); try { jsPsych.pluginAPI.audioContext().resume(); } catch(e) {}">
+                    <button type="button" class="custom-submit-btn" style="margin-bottom: 20px; background-color: #007bff;" onclick="document.getElementById('practice-audio-elem').play();">
                         🔊 Test Audio
                     </button>
                 </div>
@@ -451,7 +461,7 @@
     // --- 8. MAIN PROCEDURE ---
     const procedure = {
         timeline: [
-            // ISI: Blank screen instead of blinking cross
+            // ISI: Blank screen
             { 
                 type: jsPsychHtmlKeyboardResponse, 
                 stimulus: '<div style="height: 72px;"></div>', 
@@ -461,11 +471,11 @@
             // Emotional Prime
             { 
                 type: jsPsychHtmlKeyboardResponse, 
-                stimulus: '', // Placeholder, rendered cleanly in on_start
+                stimulus: '', 
                 choices: "NO_KEYS", 
                 trial_duration: RUNTIME_CONFIG.primeDuration,
                 data: {
-                    emotion: jsPsych.timelineVariable('emo') // jsPsych evaluates this securely before on_start
+                    emotion: jsPsych.timelineVariable('emo') 
                 },
                 on_start: function(trial) {
                     const emo = trial.data.emotion;
@@ -477,8 +487,7 @@
             {
                 type: jsPsychAudioKeyboardResponse,
                 stimulus: jsPsych.timelineVariable('audio'),
-                choices: ['f', 'j', 'F', 'J'], // Includes caps lock safeguard
-                use_webaudio: false,
+                choices: ['f', 'j', 'F', 'J'], 
                 trial_duration: 4000,
                 response_ends_trial: true,
                 trial_ends_after_audio: false, 
@@ -494,7 +503,6 @@
                         data.correct = false;
                         data.timed_out = true;
                     } else {
-                        // Retrieve the correct key dynamically evaluated in the data object
                         data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_key);
                         data.timed_out = false;
                     }
